@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gas_station_customer/views/forgot_password.dart';
-import 'package:gas_station_customer/views/register.dart';
+import 'package:gas_station_customer/views/authentication/forgot_password.dart';
+import 'package:gas_station_customer/views/authentication/register.dart';
+import 'package:gas_station_customer/views/home/dashboard.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 import 'package:page_transition/page_transition.dart';
 
@@ -64,7 +66,7 @@ class _LoginState extends State<Login> {
               controller: passwordcontroller,
               obscureText: _isHidden == true ? true : false,
               cursorColor: AppColors.primary,
-              keyboardType: TextInputType.emailAddress,
+              keyboardType: TextInputType.visiblePassword,
               decoration: InputDecoration(
                 labelText: 'Password',
                 labelStyle: const TextStyle(
@@ -77,8 +79,8 @@ class _LoginState extends State<Login> {
                 focusedBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: AppColors.border),
                 ),
-                hintText: '••••••••',
-                hintStyle: const TextStyle(color: AppColors.black),
+                // hintText: '••••••••',
+                // hintStyle: const TextStyle(color: AppColors.black),
                 suffixIcon: InkWell(
                   onTap: () {
                     _isHidden = !_isHidden;
@@ -110,6 +112,7 @@ class _LoginState extends State<Login> {
               highlightColor: Colors.transparent,
               child: Container(
                 alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
                 child: const Text(
                   'Forgot Password?',
                   style: TextStyle(color: AppColors.primary),
@@ -119,16 +122,17 @@ class _LoginState extends State<Login> {
             const SizedBox(height: 10.0),
             InkWell(
               onTap: () {
-                /*Navigator.push(
+                Navigator.pushAndRemoveUntil(
                   context,
                   PageTransition(
                     type: PageTransitionType.rightToLeftWithFade,
                     alignment: Alignment.topCenter,
                     duration: const Duration(milliseconds: 1000),
                     isIos: true,
-                    child: const ForgotPassword(),
+                    child: Dashboard(bottomIndex: 0),
                   ),
-                );*/
+                  (route) => false,
+                );
               },
               splashColor: Colors.transparent,
               highlightColor: Colors.transparent,

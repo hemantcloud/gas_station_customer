@@ -1,8 +1,110 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 import 'package:page_transition/page_transition.dart';
-const List<String> list = <String>['Madhya Pradesh', 'Uttar Pradesh', 'Assam', 'Bihar'];
+const List<String> list = <String>[
+  'Alabama',
+  'Alaska',
+  'Arizona',
+  'Arkansas',
+  'California',
+  'Colorado',
+  'Connecticut',
+  'Delaware',
+  'Florida',
+  'Georgia',
+  'Hawaii',
+  'Idaho',
+  'Illinois',
+  'Indiana',
+  'Iowa',
+  'Kansas',
+  'Kentucky',
+  'Louisiana',
+  'Maine',
+  'Maryland',
+  'Massachusetts',
+  'Michigan',
+  'Minnesota',
+  'Mississippi',
+  'Missouri',
+  'Montana',
+  'Nebraska',
+  'Nevada',
+  'New Hampshire',
+  'New Jersey',
+  'New Mexico',
+  'New York',
+  'North Carolina',
+  'North Dakota',
+  'Ohio',
+  'Oklahoma',
+  'Oregon',
+  'Pennsylvania',
+  'Rhode Island',
+  'South Carolina',
+  'South Dakota',
+  'Tennessee',
+  'Texas',
+  'Utah',
+  'Vermont',
+  'Virginia',
+  'Washington',
+  'West Virginia',
+  'Wisconsin',
+  'Wyoming',
+];
+/*Alabama,
+Alaska,
+Arizona,
+Arkansas,
+California,
+Colorado,
+Connecticut,
+Delaware,
+Florida,
+Georgia,
+Hawaii,
+Idaho,
+Illinois,
+Indiana,
+Iowa,
+Kansas,
+Kentucky,
+Louisiana,
+Maine,
+Maryland,
+Massachusetts,
+Michigan,
+Minnesota,
+Mississippi,
+Missouri,
+Montana,
+Nebraska,
+Nevada,
+New Hampshire,
+New Jersey,
+New Mexico,
+New York,
+North Carolina,
+North Dakota,
+Ohio,
+Oklahoma,
+Oregon,
+Pennsylvania,
+Rhode Island,
+South Carolina,
+South Dakota,
+Tennessee,
+Texas,
+Utah,
+Vermont,
+Virginia,
+Washington,
+West Virginia,
+Wisconsin,
+Wyoming,*/
 class Register extends StatefulWidget {
   const Register({Key? key}) : super(key: key);
 
@@ -22,6 +124,8 @@ class _RegisterState extends State<Register> {
   TextEditingController cpasswordcontroller = TextEditingController();
   bool _isHidden = false;
   bool _isHidden2 = false;
+  bool _isChecked = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,8 +320,8 @@ class _RegisterState extends State<Register> {
                 focusedBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: AppColors.border),
                 ),
-                hintText: '••••••••',
-                hintStyle: const TextStyle(color: AppColors.black),
+                // hintText: '••••••••',
+                // hintStyle: const TextStyle(color: AppColors.black),
                 suffixIcon: InkWell(
                   onTap: () {
                     _isHidden = !_isHidden;
@@ -250,8 +354,8 @@ class _RegisterState extends State<Register> {
                 focusedBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: AppColors.border),
                 ),
-                hintText: '••••••••',
-                hintStyle: const TextStyle(color: AppColors.black),
+                // hintText: '••••••••',
+                // hintStyle: const TextStyle(color: AppColors.black),
                 suffixIcon: InkWell(
                   onTap: () {
                     _isHidden2 = !_isHidden2;
@@ -265,7 +369,38 @@ class _RegisterState extends State<Register> {
                 ),
               ),
             ),
-            const SizedBox(height: 10.0),
+            const SizedBox(height: 20.0),
+            Row(
+              children: [
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _isChecked = !_isChecked;
+                    });
+                  },
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: Container(
+                    child: _isChecked == true ?
+                    SvgPicture.asset('assets/icons/checked.svg') :
+                    SvgPicture.asset('assets/icons/uncheck.svg'),
+                  ),
+                ),
+                const SizedBox(width: 10.0),
+                const Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: 'I Agree to ',style: TextStyle(color: AppColors.black)),
+                      TextSpan(
+                          text: 'Terms of Services',
+                          style: TextStyle(color: AppColors.primary,fontWeight: FontWeight.w600)
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20.0),
             InkWell(
               onTap: () {
                 /*Navigator.push(
@@ -303,7 +438,7 @@ class _RegisterState extends State<Register> {
               highlightColor: Colors.transparent,
               child: Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.only(top: 10.0),
+                padding: const EdgeInsets.only(top: 10.0,bottom: 10.0),
                 child: const Text.rich(
                   TextSpan(
                     children: [

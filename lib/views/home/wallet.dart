@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gas_station_customer/views/home/dashboard.dart';
 import 'package:gas_station_customer/views/home/success.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 import 'package:page_transition/page_transition.dart';
@@ -20,8 +21,9 @@ class _WalletState extends State<Wallet> {
         backgroundColor: const Color(0xFFEEE7F6),
         appBar: AppBar(
           centerTitle: true,
+          automaticallyImplyLeading: false,
           backgroundColor: AppColors.primary,
-          title: const Text('Pay Now',style: TextStyle(fontSize: 18.0,)),
+          title: const Text('My Wallet',style: TextStyle(fontSize: 18.0,)),
           elevation: 0.0,
         ),
         body: SingleChildScrollView(
@@ -202,28 +204,44 @@ class _WalletState extends State<Wallet> {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16.0,),
-                margin: const EdgeInsets.only(top: 20.0),
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                  color: Colors.white,
-                ),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 10.0),
-                    SvgPicture.asset('assets/icons/transaction2.svg'),
-                    const SizedBox(width: 10.0),
-                    const Expanded(
-                      flex: 1,
-                      child: Text(
-                        'Wallet Transaction History',
-                        style: TextStyle(color: AppColors.black,fontSize: 16.0),
-                      ),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageTransition(
+                      type: PageTransitionType.rightToLeftWithFade,
+                      alignment: Alignment.topCenter,
+                      duration: const Duration(milliseconds: 1000),
+                      isIos: true,
+                      child: Dashboard(bottomIndex: 2),
                     ),
-                    SvgPicture.asset('assets/icons/right.svg',width: 12.0),
-                    const SizedBox(width: 10.0),
-                  ],
+                  );
+                },
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0,),
+                  margin: const EdgeInsets.only(top: 20.0),
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                    color: Colors.white,
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 10.0),
+                      SvgPicture.asset('assets/icons/transaction2.svg'),
+                      const SizedBox(width: 10.0),
+                      const Expanded(
+                        flex: 1,
+                        child: Text(
+                          'Wallet Transaction History',
+                          style: TextStyle(color: AppColors.black,fontSize: 16.0),
+                        ),
+                      ),
+                      SvgPicture.asset('assets/icons/right.svg',width: 12.0),
+                      const SizedBox(width: 10.0),
+                    ],
+                  ),
                 ),
               ),
             ],

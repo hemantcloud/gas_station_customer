@@ -3,10 +3,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gas_station_customer/views/authentication/login.dart';
 import 'package:gas_station_customer/views/home/dashboard.dart';
 import 'package:gas_station_customer/views/home/help_and_support.dart';
-import 'package:gas_station_customer/views/home/success.dart';
+import 'package:gas_station_customer/views/home/notification.dart';
+import 'package:gas_station_customer/views/home/privacy_policy.dart';
+import 'package:gas_station_customer/views/home/terms_and_conditions.dart';
 import 'package:gas_station_customer/views/home/update_profile.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 import 'package:page_transition/page_transition.dart';
+
 class Account extends StatefulWidget {
   const Account({Key? key}) : super(key: key);
 
@@ -86,7 +89,7 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
@@ -128,23 +131,23 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
               ),
               InkWell(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    PageTransition(
-                      type: PageTransitionType.rightToLeftWithFade,
-                      alignment: Alignment.topCenter,
-                      duration: const Duration(milliseconds: 1000),
-                      isIos: true,
-                      child: const Login(),
-                    ),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   PageTransition(
+                  //     type: PageTransitionType.rightToLeftWithFade,
+                  //     alignment: Alignment.topCenter,
+                  //     duration: const Duration(milliseconds: 1000),
+                  //     isIos: true,
+                  //     child: const Login(),
+                  //   ),
+                  // );
                 },
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -170,7 +173,7 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
@@ -184,7 +187,7 @@ class _AccountState extends State<Account> {
                       alignment: Alignment.topCenter,
                       duration: const Duration(milliseconds: 1000),
                       isIos: true,
-                      child: const Login(),
+                      child: const NotificationScreen(),
                     ),
                   );
                 },
@@ -212,23 +215,23 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
               ),
               InkWell(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    PageTransition(
-                      type: PageTransitionType.rightToLeftWithFade,
-                      alignment: Alignment.topCenter,
-                      duration: const Duration(milliseconds: 1000),
-                      isIos: true,
-                      child: const Login(),
-                    ),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   PageTransition(
+                  //     type: PageTransitionType.rightToLeftWithFade,
+                  //     alignment: Alignment.topCenter,
+                  //     duration: const Duration(milliseconds: 1000),
+                  //     isIos: true,
+                  //     child: const Login(),
+                  //   ),
+                  // );
                 },
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -254,7 +257,7 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
@@ -296,7 +299,7 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
@@ -310,7 +313,7 @@ class _AccountState extends State<Account> {
                       alignment: Alignment.topCenter,
                       duration: const Duration(milliseconds: 1000),
                       isIos: true,
-                      child: const Login(),
+                      child: const PrivacyPolicy(),
                     ),
                   );
                 },
@@ -338,7 +341,7 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
@@ -352,7 +355,7 @@ class _AccountState extends State<Account> {
                       alignment: Alignment.topCenter,
                       duration: const Duration(milliseconds: 1000),
                       isIos: true,
-                      child: const Login(),
+                      child: const TermAndCondition(),
                     ),
                   );
                 },
@@ -380,24 +383,14 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
               ),
               InkWell(
                 onTap: () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    PageTransition(
-                      type: PageTransitionType.rightToLeftWithFade,
-                      alignment: Alignment.topCenter,
-                      duration: const Duration(milliseconds: 1000),
-                      isIos: true,
-                      child: const Login(),
-                    ),
-                    (route) => false,
-                  );
+                  dialogueBox(context);
                 },
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -423,7 +416,7 @@ class _AccountState extends State<Account> {
                           style: TextStyle(color: AppColors.secondary),
                         ),
                       ),
-                      SvgPicture.asset('assets/icons/right.svg'),
+                      SvgPicture.asset('assets/icons/right.svg',width: 10.0),
                     ],
                   ),
                 ),
@@ -459,6 +452,99 @@ class _AccountState extends State<Account> {
           spreadRadius: 0,
         ),
       ],
+    );
+  }
+  void dialogueBox(BuildContext context) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(13.0)),
+          ),
+          insetPadding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.1),
+          backgroundColor: AppColors.white,
+          title: Column(
+            children: [
+              const Text('?',style: TextStyle(color: AppColors.primary,fontSize: 50.0),),
+              const Text(
+                'Are you sure do you want to exit',
+                style: TextStyle(color: AppColors.secondary,fontSize: 14.0),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 10.0),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 42.0,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        decoration: const BoxDecoration(
+                          color: AppColors.red,
+                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        ),
+                        child: const Text(
+                          'No',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.05),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          PageTransition(
+                            type: PageTransitionType.rightToLeftWithFade,
+                            alignment: Alignment.topCenter,
+                            duration: const Duration(milliseconds: 1000),
+                            isIos: true,
+                            child: const Login(),
+                          ),
+                          (route) => false,
+                        );
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        height: 42.0,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        ),
+                        child: const Text(
+                          'Yes',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

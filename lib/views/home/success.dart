@@ -1,24 +1,41 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gas_station_customer/models/rating_model.dart';
 import 'package:gas_station_customer/views/home/dashboard.dart';
+import 'package:gas_station_customer/views/utilities/loader.dart';
+import 'package:gas_station_customer/views/utilities/urls.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:page_transition/page_transition.dart';
+
+// apis
+import 'dart:async';
+import 'dart:convert' as convert;
+import 'package:http/http.dart' as http;
+import 'package:pretty_http_logger/pretty_http_logger.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// apis
+
 class Success extends StatefulWidget {
-  const Success({Key? key}) : super(key: key);
+  String merchanId;
+  String profileImage;
+  String name;
+  Success({Key? key,required this.merchanId,required this.profileImage,required this.name}) : super(key: key);
 
   @override
   State<Success> createState() => _SuccessState();
 }
 
 class _SuccessState extends State<Success> {
-  TextEditingController amountController = TextEditingController();
   late final _ratingController;
   late double _rating;
   double _userRating = 3.0;
   int _ratingBarMode = 2;
-  double _initialRating = 5.0;
+  double _initialRating = 0.0;
   bool _isRTLMode = false;
   bool _isVertical = false;
   IconData? _selectedIcon;
@@ -26,15 +43,26 @@ class _SuccessState extends State<Success> {
   @override
   void initState() {
     super.initState();
-    _ratingController = TextEditingController(text: '3.0');
+    _ratingController = TextEditingController(text: '0.0');
     _rating = _initialRating;
+    all_process();
+  }
+  late String authToken;
+  late String userId;
+  Future<void> all_process() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      authToken = prefs.getString('authToken')!;
+      userId = prefs.getString('userId')!;
+      print('my auth token is >>>>> {$authToken}');
+      print('my user id is >>>>> {$userId}');
+    });
   }
 
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      top: true,
       child: Scaffold(
         backgroundColor: const Color(0xFFEEE7F6),
         appBar: AppBar(
@@ -45,7 +73,7 @@ class _SuccessState extends State<Success> {
             statusBarIconBrightness: Brightness.dark, // For Android (dark icons)
             statusBarBrightness: Brightness.light, // For iOS (dark icons)
           ),
-          toolbarHeight: 70.0,
+          toolbarHeight: 60.0,
           automaticallyImplyLeading: false,
           backgroundColor: AppColors.primary,
           flexibleSpace: Padding(
@@ -79,7 +107,7 @@ class _SuccessState extends State<Success> {
                     flex: 1,
                     child: Center(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: const [
                           Text(
@@ -92,10 +120,10 @@ class _SuccessState extends State<Success> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            '27 February 2023 at 21:52',
-                            style: TextStyle(color: AppColors.white,fontSize: 10.0),
-                          ),
+                          // Text(
+                          //   '27 February 2023 at 21:52',
+                          //   style: TextStyle(color: AppColors.white,fontSize: 10.0),
+                          // ),
                         ],
                       ),
                     ),
@@ -141,25 +169,25 @@ class _SuccessState extends State<Success> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset('assets/images/station_image1.png',width: 100.0,),
+                      Image.network(widget.profileImage,width: 70.0,),
                       const SizedBox(width: 10.0),
                       Expanded(
                         flex: 1,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              'Quick Stop Station',
-                              style: TextStyle(
+                              widget.name,
+                              style: const TextStyle(
                                   fontSize: 16.0,
                                   color: AppColors.black,
                                   fontWeight: FontWeight.w600
                               ),
                             ),
-                            Text(
-                              'Gas Station',
-                              style: TextStyle(color: AppColors.secondary),
-                            ),
+                            // const Text(
+                            //   'Gas Station',
+                            //   style: TextStyle(color: AppColors.secondary),
+                            // ),
                           ],
                         ),
                       ),
@@ -222,17 +250,17 @@ class _SuccessState extends State<Success> {
                 ),
                 InkWell(
                   onTap: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      PageTransition(
-                        type: PageTransitionType.rightToLeftWithFade,
-                        alignment: Alignment.topCenter,
-                        duration: const Duration(milliseconds: 1000),
-                        isIos: true,
-                        child: Dashboard(bottomIndex: 0),
-                      ),
-                      (route) => false,
-                    );
+                    String review = reviewController.text;
+                    int _rating2 = _rating.toInt();
+                    print(_rating2);
+                    print(_rating2.runtimeType);
+                    if(_rating2 == 0){
+                      Utilities().toast("Please Select a rating.");
+                    }else if(review.isEmpty){
+                      Utilities().toast("Please write something.");
+                    }else {
+                      ratingApi(context, _rating2);
+                    }
                   },
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
@@ -253,12 +281,29 @@ class _SuccessState extends State<Success> {
                     ),
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.only(top: 10.0),
-                  child: Text(
-                    'Skip Rating',
-                    style: TextStyle(color: AppColors.primary),
-                    textAlign: TextAlign.center,
+                InkWell(
+                  onTap: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      PageTransition(
+                        type: PageTransitionType.rightToLeftWithFade,
+                        alignment: Alignment.topCenter,
+                        duration: const Duration(milliseconds: 1000),
+                        isIos: true,
+                        child: Dashboard(bottomIndex: 0),
+                      ),
+                          (route) => false,
+                    );
+                  },
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  child: const Padding(
+                    padding: EdgeInsets.only(top: 10.0),
+                    child: Text(
+                      'Skip Rating',
+                      style: TextStyle(color: AppColors.primary),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
               ],
@@ -380,4 +425,46 @@ class _SuccessState extends State<Success> {
       Colors.amber : const Color(0xFFC5C5C5),
     );
   }
+  // RatingApi
+  Future<void> ratingApi(BuildContext context, int _rat) async {
+    Loader.progressLoadingDialog(context, true);
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var request = {};
+    request['merchant_id'] = widget.merchanId;
+    request['rating'] = _rat;
+    request['comment'] = reviewController.text;
+    var response = await http.post(Uri.parse(Urls.rating),
+        body: convert.jsonEncode(request),
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    RatingModel res = await RatingModel.fromJson(jsonResponse);
+    if(res.status == true){
+      Utilities().toast(res.message);
+      Navigator.pushAndRemoveUntil(
+        context,
+        PageTransition(
+          type: PageTransitionType.rightToLeftWithFade,
+          alignment: Alignment.topCenter,
+          duration: const Duration(milliseconds: 1000),
+          isIos: true,
+          child: Dashboard(bottomIndex: 0),
+        ),
+        (route) => false,
+      );
+      setState(() {});
+    }else{
+      Utilities().toast(res.message);
+      setState(() {});
+    }
+    return;
+  }
+  // Rating
 }

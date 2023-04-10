@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gas_station_customer/models/logout_model.dart';
+import 'package:gas_station_customer/models/profile_model.dart';
 import 'package:gas_station_customer/views/authentication/login.dart';
 import 'package:gas_station_customer/views/home/dashboard.dart';
 import 'package:gas_station_customer/views/home/help_and_support.dart';
@@ -7,8 +9,18 @@ import 'package:gas_station_customer/views/home/notification.dart';
 import 'package:gas_station_customer/views/home/privacy_policy.dart';
 import 'package:gas_station_customer/views/home/terms_and_conditions.dart';
 import 'package:gas_station_customer/views/home/update_profile.dart';
+import 'package:gas_station_customer/views/utilities/loader.dart';
+import 'package:gas_station_customer/views/utilities/urls.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
+import 'package:internet_popup/internet_popup.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:share_plus/share_plus.dart';
+// apis
+import 'dart:async';
+import 'dart:convert' as convert;
+import 'package:pretty_http_logger/pretty_http_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// apis
 
 class Account extends StatefulWidget {
   const Account({Key? key}) : super(key: key);
@@ -18,17 +30,42 @@ class Account extends StatefulWidget {
 }
 
 class _AccountState extends State<Account> {
+  bool isConnected = false;
+  late String authToken;
+  late String userId;
+  Data? userData;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    Future.delayed(Duration.zero,(){
+      allProcess();
+    });
+  }
+  Future<void> allProcess() async {
+    InternetPopup().initialize(context: context);
+    isConnected = await InternetPopup().checkInternet();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      authToken = prefs.getString('authToken')!;
+      userId = prefs.getString('userId')!;
+      print('my auth token is >>>>> {$authToken}');
+      print('my user id is >>>>> {$userId}');
+    });
+    if(isConnected) {
+      profileApi(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      top: true,
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
           centerTitle: true,
           backgroundColor: AppColors.primary,
-          title: const Text('Account',style: TextStyle(fontSize: 18.0,)),
+          title: const Text('Settings',style: TextStyle(fontSize: 18.0,)),
           elevation: 0.0,
         ),
         body: SingleChildScrollView(
@@ -40,12 +77,12 @@ class _AccountState extends State<Account> {
                   children: [
                     SvgPicture.asset('assets/icons/gas_station.svg'),
                     const SizedBox(height: 20.0),
-                    const Text(
-                      'Quick Stop Station',
+                    Text(
+                      userData == null ? '' :userData!.fullName.toString(),
                       style: TextStyle(color: AppColors.black,fontSize: 16.0,fontWeight: FontWeight.w600),
                     ),
-                    const Text(
-                      'steveaustin@gmail.com',
+                    Text(
+                      userData == null ? '' :userData!.email.toString(),
                       style: TextStyle(color: AppColors.secondary,),
                     ),
                   ],
@@ -61,9 +98,11 @@ class _AccountState extends State<Account> {
                       alignment: Alignment.topCenter,
                       duration: const Duration(milliseconds: 1000),
                       isIos: true,
-                      child: const UpdateProfile(),
+                      child: UpdateProfile(userData: userData!),
                     ),
-                  );
+                  ).then((value) {
+                    profileApi(context);
+                  });
                 },
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -187,7 +226,7 @@ class _AccountState extends State<Account> {
                       alignment: Alignment.topCenter,
                       duration: const Duration(milliseconds: 1000),
                       isIos: true,
-                      child: const NotificationScreen(),
+                      child:  NotificationScreen(status: 'back',),
                     ),
                   );
                 },
@@ -222,6 +261,7 @@ class _AccountState extends State<Account> {
               ),
               InkWell(
                 onTap: () {
+                  _share();
                   // Navigator.push(
                   //   context,
                   //   PageTransition(
@@ -461,34 +501,37 @@ class _AccountState extends State<Account> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(13.0)),
+            borderRadius: BorderRadius.all(Radius.circular(13.0)),
           ),
-          insetPadding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * 0.1),
+          insetPadding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.1),
           backgroundColor: AppColors.white,
           title: Column(
             children: [
-              const Text('?',style: TextStyle(color: AppColors.primary,fontSize: 50.0),),
+              // const Text('?',style: TextStyle(color: AppColors.primary,fontSize: 50.0),),
+              // SvgPicture.asset("assets/icons/alert2.svg",width: 100.0,color: AppColors.primary,),
+              SvgPicture.asset('assets/icons/logout.svg',height: 60,),
+              const SizedBox(height: 20.0),
               const Text(
-                'Are you sure do you want to exit',
+                'Are you sure\ndo you want to exit',
                 style: TextStyle(color: AppColors.secondary,fontSize: 14.0),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 10.0),
+              const SizedBox(height: 10.0),
               Row(
                 children: [
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        Navigator.pop(context);
+                        Navigator.of(context).pop();
                       },
                       child: Container(
                         alignment: Alignment.center,
-                        height: 42.0,
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        height: 50.0,
+                        // margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.03),
+                        // padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         decoration: const BoxDecoration(
                           color: AppColors.red,
-                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
                         ),
                         child: const Text(
                           'No',
@@ -496,36 +539,28 @@ class _AccountState extends State<Account> {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
-                            fontSize: 13.0,
+                            fontSize: 14.0,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.05),
+                  SizedBox(width: MediaQuery.of(context).size.width * 0.03),
                   Expanded(
                     child: InkWell(
                       onTap: () {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          PageTransition(
-                            type: PageTransitionType.rightToLeftWithFade,
-                            alignment: Alignment.topCenter,
-                            duration: const Duration(milliseconds: 1000),
-                            isIos: true,
-                            child: const Login(),
-                          ),
-                          (route) => false,
-                        );
+                        logoutApi(context);
+                        setState(() {});
                       },
                       child: Container(
                         alignment: Alignment.center,
-                        height: 42.0,
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        height: 50.0,
+                        // margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.03),
+                        // padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         decoration: const BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
                         ),
                         child: const Text(
                           'Yes',
@@ -533,8 +568,9 @@ class _AccountState extends State<Account> {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
-                            fontSize: 13.0,
+                            fontSize: 14.0,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -547,11 +583,73 @@ class _AccountState extends State<Account> {
       },
     );
   }
-}
-class Transactions{
-  String? name;
-  String? image;
-  String? money;
-  String? type;
-  Transactions({required this.name,required this.image,required this.money,required this.type});
+  // logoutApi
+  Future<void> logoutApi(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    Loader.progressLoadingDialog(context, true);
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var response = await http.get(Uri.parse(Urls.logout),
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    LogoutModel res = await LogoutModel.fromJson(jsonResponse);
+    if(res.status == true){
+      prefs.setBool('isLogin',false);
+      Navigator.pushAndRemoveUntil(
+        context,
+        PageTransition(
+          type: PageTransitionType.rightToLeftWithFade,
+          alignment: Alignment.topCenter,
+          duration: const Duration(milliseconds: 1000),
+          isIos: true,
+          child: const Login(),
+        ),
+            (route) => false,
+      );
+      Utilities().toast(res.message);
+      setState(() {});
+    }else{
+      Utilities().toast(res.message);
+      setState(() {});
+    }
+    return;
+  }
+  // logoutApi
+  // profileApi api
+  Future<void> profileApi(BuildContext context) async {
+    Loader.progressLoadingDialog(context, true);
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var response = await http.get(Uri.parse(Urls.profile),
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    ProfileModel res = await ProfileModel.fromJson(jsonResponse);
+    if (res.status == true) {
+      userData = res.data;
+      setState(() {});
+    } else {
+      Utilities().toast(res.message.toString());
+      setState(() {});
+    }
+    return;
+  }
+  // profileApi api
+
+  void _share() {
+    Share.share('check out my website https://example.com', subject: 'Look what I made!');
+  }
 }

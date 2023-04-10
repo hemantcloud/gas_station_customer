@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gas_station_customer/views/home/account.dart';
 import 'package:gas_station_customer/views/home/home.dart';
-import 'package:gas_station_customer/views/home/transaction.dart';
+import 'package:gas_station_customer/views/home/transactions.dart';
 import 'package:gas_station_customer/views/home/wallet.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 class Dashboard extends StatefulWidget {

@@ -96,7 +96,7 @@ class _StationProfile2State extends State<StationProfile2> {
                 alignment: Alignment.topCenter,
                 duration: const Duration(milliseconds: 1000),
                 isIos: true,
-                child: const CreatePassword(),
+                child: CreatePassword(EmailOrPhone: "",type: "",otp: ""),
               ),
             );
           },

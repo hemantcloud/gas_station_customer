@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gas_station_customer/models/add_wallet_balance_model.dart';
+import 'package:gas_station_customer/models/wallet_balance_model.dart';
 import 'package:gas_station_customer/views/home/dashboard.dart';
 import 'package:gas_station_customer/views/home/success.dart';
+import 'package:gas_station_customer/views/utilities/loader.dart';
+import 'package:gas_station_customer/views/utilities/urls.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
+import 'package:internet_popup/internet_popup.dart';
 import 'package:page_transition/page_transition.dart';
+
+// apis
+import 'dart:async';
+import 'dart:convert' as convert;
+import 'package:http/http.dart' as http;
+import 'package:pretty_http_logger/pretty_http_logger.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// apis
+
+
 class Wallet extends StatefulWidget {
   const Wallet({Key? key}) : super(key: key);
 
@@ -12,11 +28,34 @@ class Wallet extends StatefulWidget {
 }
 
 class _WalletState extends State<Wallet> {
+  bool isConnected = false;
   TextEditingController amountController = TextEditingController();
+  late String authToken;
+  late String userId;
+  int balance = 0;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    allProcess();
+  }
+  Future<void> allProcess() async {
+    InternetPopup().initialize(context: context);
+    isConnected = await InternetPopup().checkInternet();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      authToken = prefs.getString('authToken')!;
+      userId = prefs.getString('userId')!;
+      print('my auth token is >>>>> {$authToken}');
+      print('my user id is >>>>> {$userId}');
+    });
+    if(isConnected){
+      walletBalanceApi(context);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      top: true,
       child: Scaffold(
         backgroundColor: const Color(0xFFEEE7F6),
         appBar: AppBar(
@@ -42,14 +81,14 @@ class _WalletState extends State<Wallet> {
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: const Text(
-                        'Quick Stop Station',
+                        'Wallet Balance',
                         style: TextStyle(color: AppColors.black,fontSize: 16.0),
                       ),
                     ),
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                      child: const Text(
-                          '\$2000',
+                      child: Text(
+                          '\$$balance',
                           style: TextStyle(color: AppColors.primary,fontSize: 20.0,fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -170,6 +209,12 @@ class _WalletState extends State<Wallet> {
                     ),
                     InkWell(
                       onTap: () {
+                        String amt = amountController.text;
+                        if(amt.isEmpty){
+                          Utilities().toast("Payment must be at least ₹1.");
+                        }else{
+                          addWalletBalanceApi(context);
+                        }
                         // Navigator.pushAndRemoveUntil(
                         //   context,
                         //   PageTransition(
@@ -260,4 +305,61 @@ class _WalletState extends State<Wallet> {
       border: InputBorder.none,
     );
   }
+  // walletBalanceApi
+  Future<void> walletBalanceApi(BuildContext context) async {
+    Loader.progressLoadingDialog(context, true);
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var response = await http.post(Uri.parse(Urls.walletBalance),
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    WalletBalanceModel res = await WalletBalanceModel.fromJson(jsonResponse);
+    if(res.status == true){
+      balance = int.parse(res.data!.balance!);
+      setState(() {});
+    }else{
+      Utilities().toast(res.message);
+      setState(() {});
+    }
+    return;
+  }
+  // walletBalanceApi
+  // walletBalanceApi
+  Future<void> addWalletBalanceApi(BuildContext context) async {
+    Loader.progressLoadingDialog(context, true);
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var request = {};
+    request['amount'] = amountController.text;
+    var response = await http.post(Uri.parse(Urls.addWalletBalance),
+        body: convert.jsonEncode(request),
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    AddWalletBalanceModel res = await AddWalletBalanceModel.fromJson(jsonResponse);
+    if(res.status == true){
+      Utilities().toast(res.message);
+      walletBalanceApi(context);
+      amountController.clear();
+      setState(() {});
+    }else{
+      Utilities().toast(res.message);
+      setState(() {});
+    }
+    return;
+  }
+  // walletBalanceApi
 }

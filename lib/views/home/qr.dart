@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gas_station_customer/views/home/pay.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 import 'package:page_transition/page_transition.dart';
@@ -35,11 +36,10 @@ class _QRState extends State<QR> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    Timer(Duration(seconds: 1),
-            (){controller!.resumeCamera();
-            setState(() {
-
-            });}
+    Timer(Duration(seconds: 1), (){
+      controller!.resumeCamera();
+      setState(() {});
+    }
     );
 
 
@@ -52,9 +52,15 @@ class _QRState extends State<QR> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Scan QR Code'),
-          automaticallyImplyLeading: false,
           backgroundColor: AppColors.primary,
           centerTitle: true,
+          leading: InkWell(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              padding: const EdgeInsets.only(top: 15.0,bottom: 15.0),
+              child: SvgPicture.asset('assets/icons/left.svg',color: Colors.white,),
+            ),
+          ),
         ),
         body: Column(
           children: <Widget>[
@@ -175,8 +181,7 @@ class _QRState extends State<QR> {
     controller.scannedDataStream.listen((scanData) {
       setState(() {
         result = scanData;
-        controller?.getCameraInfo();
-
+        controller.getCameraInfo();
         if(!isResult){
           isResult = true;
           Navigator.push(
@@ -186,9 +191,11 @@ class _QRState extends State<QR> {
               alignment: Alignment.topCenter,
               duration: const Duration(milliseconds: 1000),
               isIos: true,
-              child: const Pay(),
+              child: Pay(merchantId: result!.code!),
             ),
           ).then((value) => isResult=false);
+          // print("isResult is --------------------------$isResult");
+          // print("result is --------------------------${result!.code}");
         }
 
       });
@@ -199,7 +206,8 @@ class _QRState extends State<QR> {
     log('${DateTime.now().toIso8601String()}_onPermissionSet $p');
     if (!p) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('no Permission')),
+        const SnackBar(content: Text('no Permission'),
+        ),
       );
     }
   }

@@ -2,25 +2,67 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gas_station_customer/views/authentication/create_password.dart';
-import 'package:gas_station_customer/views/authentication/forgot_password.dart';
+import 'package:gas_station_customer/models/merchant_details_model.dart';
 import 'package:gas_station_customer/views/home/qr.dart';
+import 'package:gas_station_customer/views/utilities/loader.dart';
+import 'package:gas_station_customer/views/utilities/urls.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 import 'package:page_transition/page_transition.dart';
 
-class StationProfile extends StatefulWidget {
-  const StationProfile({Key? key}) : super(key: key);
+// apis
+import 'dart:async';
+import 'dart:convert' as convert;
+import 'package:pretty_http_logger/pretty_http_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+// apis
+
+class MerchantDetail extends StatefulWidget {
+  int merchantId;
+  String profileImage;
+  String merchantName;
+  String categoryName;
+  String rating;
+  String? about;
+  String distance;
+  double latitude;
+  double longitude;
+  MerchantDetail({Key? key,required this.merchantId,required this.profileImage,required this.merchantName,required this.categoryName,required this.rating,required this.about,required this.distance,required this.latitude,required this.longitude}) : super(key: key);
 
   @override
-  State<StationProfile> createState() => _StationProfileState();
+  State<MerchantDetail> createState() => _MerchantDetailState();
 }
 
-class _StationProfileState extends State<StationProfile> {
+class _MerchantDetailState extends State<MerchantDetail> {
   TextEditingController otpController = TextEditingController();
+  late String authToken;
+  late String userId;
+  List<Discounts> discountList = [];
+  String aboutData = '';
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    Future.delayed(Duration.zero,(){
+      allProcess();
+    });
+  }
+  allProcess() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    print("widget.merchantId is ----------${widget.merchantId}");
+    authToken = prefs.getString('authToken')!;
+    userId = prefs.getString('userId')!;
+    print('my auth token is >>>>> {$authToken}');
+    print('my user id is >>>>> {$userId}');
+    merchantProfileApi(context, widget.merchantId);
+    print("widget.rating is -----------${widget.rating}");
+    print("widget.rating type is -----------${widget.rating.runtimeType}");
+    setState(() {});
+  }
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      top: true,
       child: Scaffold(
         appBar: AppBar(
           leading: InkWell(
@@ -53,13 +95,20 @@ class _StationProfileState extends State<StationProfile> {
                   alignment: Alignment.center,
                   child: Container(
                     decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.yellow,width: 2,style: BorderStyle.solid),
-                        borderRadius: const BorderRadius.all(Radius.circular(11.0))
+                      border: Border.all(color: AppColors.yellow,width: 2,style: BorderStyle.solid),
+                      borderRadius: const BorderRadius.all(Radius.circular(11.0)),
+                      image: DecorationImage(
+                        image: NetworkImage(widget.profileImage),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.center
+                      )
                     ),
-                    child: Image.asset(
-                      'assets/images/station_profile.png',
-                      width: MediaQuery.of(context).size.width * 0.37,
-                    ),
+                    width: 130.0,
+                    height: 130.0,
+                    // child: Image.network(
+                    //   widget.profileImage,
+                    //   height: MediaQuery.of(context).size.width * 0.37,
+                    // ),
                   ),
                 ),
                 flex: 35,
@@ -107,48 +156,62 @@ class _StationProfileState extends State<StationProfile> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Quick Stop Station',
-                                      style: TextStyle(
+                                    Text(
+                                      widget.merchantName,
+                                      style: const TextStyle(
                                           fontSize: 16.0,
                                           color: AppColors.black,
                                           fontWeight: FontWeight.w600
                                       ),
                                     ),
-                                    const Text(
-                                      'Gas Station',
-                                      style: TextStyle(color: AppColors.secondary),
+                                    Text(
+                                      widget.categoryName,
+                                      style: const TextStyle(color: AppColors.secondary),
                                     ),
                                     Row(
                                       children: [
+                                        widget.rating == "0.0" ?
+                                        Container() :
                                         SvgPicture.asset('assets/icons/star.svg'),
+                                        widget.rating == "0.0" ?
+                                        Container() :
                                         const SizedBox(width: 5.0),
+                                        widget.rating == "0.0" ?
                                         const Text(
-                                          '4.5',
-                                          style: TextStyle(color: AppColors.black),
+                                          "No ratings yet",
+                                          style: TextStyle(color: AppColors.black,fontSize: 10.0),
+                                        ) :
+                                        Text(
+                                          widget.rating,
+                                          style: const TextStyle(color: AppColors.black,fontSize: 10.0),
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 1.0,horizontal: 10.0,),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(14.0),
-                                    // color: AppColors.disabledButtonColor,
-                                    color: AppColors.primary,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      SvgPicture.asset('assets/icons/up_arrow.svg'),
-                                      const SizedBox(width: 5.0),
-                                      const Text(
-                                        '3 KM',
-                                        style: TextStyle(
-                                          color: Colors.white,
+                                InkWell(
+                                  onTap: () {
+                                    openMap(widget.latitude, widget.longitude);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 1.0,horizontal: 10.0,),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14.0),
+                                      // color: AppColors.disabledButtonColor,
+                                      color: AppColors.primary,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        SvgPicture.asset('assets/icons/up_arrow.svg'),
+                                        const SizedBox(width: 5.0),
+                                        Text(
+                                          '${widget.distance} KM',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -163,9 +226,9 @@ class _StationProfileState extends State<StationProfile> {
                           ),
                         ),
                         const SizedBox(height: 30.0),
-                        const Text(
-                          "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets.",
-                          style: TextStyle(color: AppColors.secondary),
+                        Text(
+                          aboutData == null || aboutData.isEmpty ? 'No data found' : aboutData!,
+                          style: const TextStyle(color: AppColors.secondary),
                         ),
                         const Divider(
                           color: AppColors.secondary,
@@ -179,28 +242,28 @@ class _StationProfileState extends State<StationProfile> {
                               fontWeight: FontWeight.w600
                           ),
                         ),
-                        ListView.builder(
+                        discountList.isEmpty ? const Text("No discounts yet?",style: TextStyle(color: AppColors.secondary),) : ListView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: 10,
+                          itemCount: discountList.length,
                           itemBuilder: (context, index) {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
-                                  "50% off on purchase",
-                                  style: TextStyle(color: AppColors.black),
+                                  discountList[index].title!,
+                                  style: const TextStyle(color: AppColors.black),
                                 ),
-                                SizedBox(height: 10.0),
+                                const SizedBox(height: 10.0),
                                 Text(
-                                  "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley.",
-                                  style: TextStyle(color: AppColors.secondary),
+                                  discountList[index].description!,
+                                  style: const TextStyle(color: AppColors.secondary),
                                 ),
-                                Divider(
+                                const Divider(
                                   color: AppColors.secondary,
                                   thickness: 0.4,
                                 ),
-                                SizedBox(height: 10.0),
+                                const SizedBox(height: 10.0),
                               ],
                             );
                           },
@@ -272,5 +335,47 @@ class _StationProfileState extends State<StationProfile> {
       ),
       border: InputBorder.none,
     );
+  }
+  // merchantsListApi
+  Future<void> merchantProfileApi(BuildContext context, int merchantId) async {
+    Loader.progressLoadingDialog(context, true);
+    var request = {};
+    request['merchant_id'] = merchantId;
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var response = await http.post(Uri.parse(Urls.merchantDetail),
+        body: convert.jsonEncode(request),
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    MerchantDetailsModel res = await MerchantDetailsModel.fromJson(jsonResponse);
+    if(res.status == true){
+      discountList = res.data!.discounts!;
+      if(res.data!.about == null){
+        aboutData = '';
+      }else{
+        aboutData = res.data!.about!;
+      }
+      setState(() {});
+    }else{
+      Utilities().toast(res.message);
+      setState(() {});
+    }
+    return;
+  }
+  // merchantsListApi
+  static Future<void> openMap(double latitude, double longitude) async {
+    String googleUrl = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    if (await canLaunch(googleUrl)) {
+      await launch(googleUrl);
+    } else {
+      throw 'Could not open the map.';
+    }
   }
 }

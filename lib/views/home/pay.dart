@@ -1,10 +1,28 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gas_station_customer/models/merchant_details_after_scan_model.dart';
+import 'package:gas_station_customer/models/pay_model.dart';
+import 'package:gas_station_customer/models/wallet_balance_model.dart';
 import 'package:gas_station_customer/views/home/success.dart';
+import 'package:gas_station_customer/views/utilities/loader.dart';
+import 'package:gas_station_customer/views/utilities/urls.dart';
 import 'package:gas_station_customer/views/utilities/utilities.dart';
 import 'package:page_transition/page_transition.dart';
+
+// apis
+import 'dart:async';
+import 'dart:convert' as convert;
+import 'package:http/http.dart' as http;
+import 'package:pretty_http_logger/pretty_http_logger.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+// apis
+
 class Pay extends StatefulWidget {
-  const Pay({Key? key}) : super(key: key);
+  String merchantId;
+  Pay({Key? key,required this.merchantId}) : super(key: key);
 
   @override
   State<Pay> createState() => _PayState();
@@ -12,10 +30,38 @@ class Pay extends StatefulWidget {
 
 class _PayState extends State<Pay> {
   TextEditingController amountController = TextEditingController();
+  FocusNode focusAmt = FocusNode();
+  late String authToken;
+  late String userId;
+  int balance = 0;
+  MerchantData? merchantData;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    all_process();
+  }
+  Future<void> all_process() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      authToken = prefs.getString('authToken')!;
+      userId = prefs.getString('userId')!;
+      print('my auth token is >>>>> {$authToken}');
+      print('my user id is >>>>> {$userId}');
+    });
+    walletBalanceApi(context);
+    merchantDetailAfterScanApi(context,widget.merchantId);
+  }
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    focusAmt.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      top: true,
       child: Scaffold(
         backgroundColor: const Color(0xFFEEE7F6),
         appBar: AppBar(
@@ -43,29 +89,34 @@ class _PayState extends State<Pay> {
               children: [
                 Row(
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10.0),
-                      child: CircleAvatar(
-                        backgroundImage: AssetImage('assets/images/station_profile.png'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      child: merchantData == null ?
+                      const CircleAvatar(
                         maxRadius: 22.0,
+                        backgroundImage: AssetImage('assets/images/profile_default.png'),
+                      ) :
+                      CircleAvatar(
+                        maxRadius: 22.0,
+                        backgroundImage: NetworkImage(merchantData!.profileImage!),
                       ),
                     ),
-                    const SizedBox(width: 10.0),
+                    const SizedBox(width: 0.0),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text(
-                          'Quick Stop Station',
-                          style: TextStyle(
+                          merchantData == null ? "" : merchantData!.fullName!,
+                          style: const TextStyle(
                               fontSize: 16.0,
                               color: AppColors.black,
                               fontWeight: FontWeight.w600
                           ),
                         ),
-                        Text(
-                          'Gas Station',
+                        /*Text(
+                          merchantData == null ? "" : merchantData!.fullName!,
                           style: TextStyle(color: AppColors.secondary),
-                        ),
+                        ),*/
                       ],
                     )
                   ],
@@ -89,6 +140,7 @@ class _PayState extends State<Pay> {
                         flex: 1,
                         child: TextFormField(
                           controller: amountController,
+                          focusNode: focusAmt,
                           style: const TextStyle(fontSize: 14.0, color: AppColors.black),
                           cursorColor: AppColors.primary,
                           decoration: myInputDecoration('Enter Amount'),
@@ -115,9 +167,9 @@ class _PayState extends State<Pay> {
                         flex: 1,
                         child: Text('Wallet Balance',style: TextStyle(color: AppColors.primary)),
                       ),
-                      const Expanded(
+                      Expanded(
                         flex: 1,
-                        child: Text('\$2000 USD',style: TextStyle(color: AppColors.primary),textAlign: TextAlign.right,),
+                        child: Text('\$$balance USD',style: const TextStyle(color: AppColors.primary),textAlign: TextAlign.right,),
                       ),
                     ],
                   ),
@@ -130,16 +182,13 @@ class _PayState extends State<Pay> {
           color: const Color(0xFFEEE7F6),
           child: InkWell(
             onTap: () {
-              Navigator.push(
-                context,
-                PageTransition(
-                  type: PageTransitionType.rightToLeftWithFade,
-                  alignment: Alignment.topCenter,
-                  duration: const Duration(milliseconds: 1000),
-                  isIos: true,
-                  child: const Success(),
-                ),
-              );
+              focusAmt.unfocus();
+              String amt = amountController.text;
+              if(amt.isEmpty){
+                Utilities().toast("Payment must be at least ₹1.");
+              }else {
+                Pay(context, widget.merchantId);
+              }
             },
             splashColor: Colors.transparent,
             highlightColor: Colors.transparent,
@@ -174,4 +223,99 @@ class _PayState extends State<Pay> {
       border: InputBorder.none,
     );
   }
+  // walletBalanceApi
+  Future<void> walletBalanceApi(BuildContext context) async {
+    Loader.progressLoadingDialog(context, true);
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var response = await http.post(Uri.parse(Urls.walletBalance),
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    WalletBalanceModel res = await WalletBalanceModel.fromJson(jsonResponse);
+    if(res.status == true){
+      balance = int.parse(res.data!.balance!);
+      setState(() {});
+    }else{
+      Utilities().toast(res.message);
+      setState(() {});
+    }
+    return;
+  }
+  // walletBalanceApi
+  // merchantDetailAfterScanApi
+  Future<void> merchantDetailAfterScanApi(BuildContext context, String merchantID) async {
+    Loader.progressLoadingDialog(context, true);
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var request = {};
+    request['merchant_id'] = merchantID;
+    var response = await http.post(Uri.parse(Urls.merchantDetailsAfterScan),
+        body: convert.jsonEncode(request),
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    MerchantDetailsAfterScanModel res = await MerchantDetailsAfterScanModel.fromJson(jsonResponse);
+    if(res.status == true){
+      merchantData = res.data;
+      setState(() {});
+    }else{
+      Utilities().toast(res.message);
+      setState(() {});
+    }
+    return;
+  }
+  // merchantDetailAfterScanApi
+  // Pay
+  Future<void> Pay(BuildContext context, String merchantID) async {
+    Loader.progressLoadingDialog(context, true);
+    HttpWithMiddleware http = HttpWithMiddleware.build(middlewares: [
+      HttpLogger(logLevel: LogLevel.BODY),
+    ]);
+    var request = {};
+    request['merchant_id'] = merchantID;
+    request['pay_amount'] = amountController.text;
+    var response = await http.post(Uri.parse(Urls.pay),
+        body: convert.jsonEncode(request),
+        headers: {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "X-AUTHTOKEN" : authToken,
+          "X-USERID" : userId,
+        });
+    Map<String, dynamic> jsonResponse = convert.jsonDecode(response.body);
+    Loader.progressLoadingDialog(context, false);
+    PayModel res = await PayModel.fromJson(jsonResponse);
+    if(res.status == true){
+      Utilities().toast(res.message);
+      Navigator.push(
+        context,
+        PageTransition(
+          type: PageTransitionType.rightToLeftWithFade,
+          alignment: Alignment.topCenter,
+          duration: const Duration(milliseconds: 1000),
+          isIos: true,
+          child: Success(merchanId: merchantData!.id!,profileImage: merchantData!.profileImage!,name: merchantData!.fullName!),
+        ),
+      );
+      setState(() {});
+    }else{
+      Utilities().toast(res.message);
+      setState(() {});
+    }
+    return;
+  }
+  // Pay
 }

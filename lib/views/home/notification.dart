@@ -153,6 +153,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 2,
                                   ),
+
                                 ],
                               ),
                             ),
